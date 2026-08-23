@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.document import Document
 from app.models.user import User
 from app.core.config import settings
+from app.utils.storage import get_storage
 from app.core.exceptions import BadRequestException
 from app.utils.logger import setup_logger
 
@@ -39,24 +40,23 @@ class DocumentService:
             raise BadRequestException("File size exceeds 25 MB limit.")
 
         safe_filename = file.filename.replace(" ", "_")
-        filepath = os.path.join(settings.UPLOAD_PATH, f"{owner.id}_{safe_filename}")
-        
-        with open(filepath, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-            
-        doc_record = await self.create_document_record(safe_filename, filepath, file_size, owner.id)
+        # Use storage abstraction to save the file; the identifier will be the stored path or S3 key
+        storage = get_storage()
+        stored_path = storage.save_file(f"{owner.id}_{safe_filename}", file.file)
+
+        doc_record = await self.create_document_record(safe_filename, stored_path, file_size, owner.id)
         
         # Extract text in background or synchronously (we'll do sync for simplicity here, but in production, use Celery/BackgroundTasks)
         try:
-            text_content = self.extract_text(filepath)
-            page_count = self.get_page_count(filepath)
-            
+            text_content = self.extract_text(stored_path)
+            page_count = self.get_page_count(stored_path)
+
             doc_record.page_count = page_count
-            
-            # Pass to RAG service for chunking and embedding
+
+            # Pass to RAG service for chunking and embedding, include owner_id for isolation
             from app.services.rag_service import rag_service
-            rag_service.process_and_store_document(text_content, doc_record.id, doc_record.filename)
-            
+            rag_service.process_and_store_document(text_content, doc_record.id, doc_record.filename, owner.id)
+
             doc_record.status = "ready"
         except Exception as e:
             logger.error(f"Error processing document {doc_record.id}: {e}")

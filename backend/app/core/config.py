@@ -10,29 +10,49 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "ai_knowledge"
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/ai_knowledge"
     
-    JWT_SECRET: str = "supersecret"
+    JWT_SECRET: str = None  # Must be set via environment
+    CORS_ALLOWED_ORIGINS: str = ""  # Comma‑separated list of allowed origins
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     GEMINI_API_KEY: str = ""
     
+    # Storage configuration
+    STORAGE_BACKEND: str = "local"  # Options: local, s3
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = ""
+    AWS_S3_BUCKET: str = ""
+    
     UPLOAD_PATH: str = "storage/documents"
     CHROMA_PATH: str = "storage/chroma"
     CHROMA_HOST: str = "localhost"
     CHROMA_PORT: int = 8000
-    
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200
     TOP_K_RETRIEVAL: int = 5
     TEMPERATURE: float = 0.0
     
+    # Gemini model configuration
+    GEMINI_MODEL: str = "gemini-1.5-pro"  # Adjust as needed
+    
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "INFO"
-
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 settings = Settings()
+
+# Validate required secrets on startup
+if not settings.JWT_SECRET:
+    raise RuntimeError("JWT_SECRET must be set in the environment for production use.")
+
+if not settings.GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY must be set in the environment to use the Gemini integration.")
+
+# Optional: Warn if S3 storage is selected but boto3 is not installed
+if settings.STORAGE_BACKEND.lower() == "s3" and not __import__("importlib").util.find_spec("boto3"):
+    raise RuntimeError("STORAGE_BACKEND is set to 's3' but boto3 is not installed. Install boto3 or switch to 'local'.")
 
 # Ensure directories exist
 os.makedirs(settings.UPLOAD_PATH, exist_ok=True)

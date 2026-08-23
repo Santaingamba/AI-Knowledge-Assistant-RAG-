@@ -29,7 +29,8 @@ app = FastAPI(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "*"], # Adjust in production
+    # Parse comma‑separated origins from env var; fall back to common dev URLs
+    allow_origins=[origin.strip() for origin in settings.CORS_ALLOWED_ORIGINS.split(',') if origin.strip()] or ["http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

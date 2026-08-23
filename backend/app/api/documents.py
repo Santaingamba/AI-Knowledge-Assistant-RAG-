@@ -10,6 +10,8 @@ from app.services.auth_service import get_current_user
 from app.services.document_service import DocumentService
 from app.core.exceptions import NotFoundException
 import os
+from app.utils.logger import setup_logger
+logger = setup_logger("documents_api")
 
 router = APIRouter()
 
@@ -47,7 +49,12 @@ async def delete_document(
     if os.path.exists(doc.filepath):
         os.remove(doc.filepath)
         
-    # In a full production app, you would also delete from ChromaDB here.
+    # Delete associated vector embeddings from ChromaDB via RAG service
+    from app.services.rag_service import rag_service
+    try:
+        rag_service.delete_document_vectors(document_id)
+    except Exception as e:
+        logger.error(f"Failed to delete vectors for document {document_id}: {e}")
     
     await db.delete(doc)
     await db.commit()
