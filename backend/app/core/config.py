@@ -5,10 +5,14 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "AI Knowledge Assistant"
     API_V1_STR: str = "/api/v1"
     
+    # Legacy PostgreSQL credentials (kept for backward compatibility)
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "ai_knowledge"
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/ai_knowledge"
+    # New Neon Serverless PostgreSQL URL
+    NEON_DATABASE_URL: str = ""
+    # Alias for backward compatibility – will be overwritten by NEON_DATABASE_URL if set
+    DATABASE_URL: str = ""
     
     JWT_SECRET: str = None  # Must be set via environment
     CORS_ALLOWED_ORIGINS: str = ""  # Comma‑separated list of allowed origins
@@ -49,6 +53,11 @@ if not settings.JWT_SECRET:
 
 if not settings.GEMINI_API_KEY:
     raise RuntimeError("GEMINI_API_KEY must be set in the environment to use the Gemini integration.")
+
+# Ensure a database URL is provided (prefer Neon)
+if not settings.NEON_DATABASE_URL:
+    raise RuntimeError("NEON_DATABASE_URL must be set in the environment to connect to the database.")
+
 
 # Optional: Warn if S3 storage is selected but boto3 is not installed
 if settings.STORAGE_BACKEND.lower() == "s3" and not __import__("importlib").util.find_spec("boto3"):

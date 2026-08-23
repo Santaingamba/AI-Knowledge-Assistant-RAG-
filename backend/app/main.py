@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api import api_router
-from app.core.database import engine, Base
+from app.db.sqlmodel_db import engine, Base
 from app.middleware.error_handler import global_exception_handler
 from app.utils.logger import setup_logger
 

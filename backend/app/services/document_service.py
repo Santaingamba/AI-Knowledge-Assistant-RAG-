@@ -1,10 +1,5 @@
-import os
-import shutil
-import fitz # PyMuPDF
-from fastapi import UploadFile
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.document import Document
-from app.models.user import User
+from sqlmodel.ext.asyncio.session import AsyncSession
+from app.models.sqlmodel_models import Document, User
 from app.core.config import settings
 from app.utils.storage import get_storage
 from app.core.exceptions import BadRequestException

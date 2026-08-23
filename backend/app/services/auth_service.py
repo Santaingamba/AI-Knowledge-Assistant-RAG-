@@ -1,10 +1,10 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlmodel import select
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
-from app.models.user import User
+from app.models.sqlmodel_models import User
 from app.schemas.user import UserCreate
 from app.core.security import get_password_hash, verify_password, create_access_token, create_refresh_token
 from app.core.config import settings
