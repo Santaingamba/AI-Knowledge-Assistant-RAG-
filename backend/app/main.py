@@ -1,9 +1,10 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import SQLModel
 from app.core.config import settings
 from app.api import api_router
-from app.db.sqlmodel_db import engine, Base
+from app.core.database import engine
 from app.middleware.error_handler import global_exception_handler
 from app.utils.logger import setup_logger
 
@@ -13,7 +14,7 @@ logger = setup_logger("main")
 async def lifespan(app: FastAPI):
     # Initialize DB (in production, use Alembic migrations instead of this)
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(SQLModel.metadata.create_all)
     logger.info("Application startup complete")
     yield
     # Clean up DB

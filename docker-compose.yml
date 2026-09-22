@@ -19,18 +19,6 @@ services:
       timeout: 5s
       retries: 5
 
-  chromadb:
-    image: chromadb/chroma:0.4.24
-    container_name: ai_knowledge_chroma
-    restart: always
-    ports:
-      - "8000:8000"
-    volumes:
-      - chroma_data:/chroma/chroma
-    environment:
-      - IS_PERSISTENT=TRUE
-      - PERSIST_DIRECTORY=/chroma/chroma
-
   backend:
     build:
       context: ./backend
@@ -43,16 +31,12 @@ services:
       - ./backend:/app
       - ./storage:/app/storage
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-ai_knowledge}
-      - CHROMA_HOST=chromadb
-      - CHROMA_PORT=8000
+      - NEON_DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-ai_knowledge}
       - JWT_SECRET=${JWT_SECRET}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       db:
         condition: service_healthy
-      chromadb:
-        condition: service_started
 
   frontend:
     build:
@@ -72,4 +56,3 @@ services:
 
 volumes:
   postgres_data:
-  chroma_data:

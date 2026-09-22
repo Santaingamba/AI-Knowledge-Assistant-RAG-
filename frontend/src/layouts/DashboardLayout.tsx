@@ -1,6 +1,7 @@
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, FileText, MessageSquare, Settings, LogOut, Brain } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import api from '@/lib/api'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -11,6 +12,18 @@ const navigation = [
 
 export function DashboardLayout() {
   const location = useLocation()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout')
+    } catch {
+      // Even if the backend call fails, clear local state
+    }
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    navigate('/login')
+  }
 
   return (
     <div className="flex h-screen bg-background">
@@ -49,7 +62,10 @@ export function DashboardLayout() {
           </nav>
         </div>
         <div className="flex flex-shrink-0 border-t p-4">
-          <button className="flex w-full items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
+          >
             <LogOut className="mr-3 h-5 w-5" />
             Logout
           </button>

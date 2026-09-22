@@ -1,16 +1,8 @@
-# Python dependencies for the backend
-sqlmodel
-asyncpg
-fastapi
-uvicorn[standard]
-python-dotenv
-jose
-passlib[bcrypt]
-pyjwt
-pymupdf
-langchain
-langchain-community
-langchain-google-genai
-boto3
-
-# Frontend dependencies are in package.json
+# This file is intentionally a pointer.
+# The authoritative requirements file is backend/requirements.txt,
+# which is what the Dockerfile installs from.
+#
+# To install backend dependencies locally:
+#   pip install -r backend/requirements.txt
+#
+# Frontend dependencies are managed via frontend/package.json.

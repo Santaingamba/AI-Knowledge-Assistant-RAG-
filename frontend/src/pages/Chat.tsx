@@ -2,19 +2,24 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
-import { Send, User, Brain, Search, MessageSquarePlus } from 'lucide-react'
+import { Send, User, Brain, Search, MessageSquarePlus, Loader2 } from 'lucide-react'
+import api from '@/lib/api'
+
+type Source = { source: string; chunk: number }
 
 type Message = {
   id: string
   role: 'user' | 'assistant'
   content: string
-  sources?: Array<{ source: string; chunk: number }>
+  sources?: Source[]
 }
 
 export function Chat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [chatId, setChatId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -25,7 +30,13 @@ export function Chat() {
     scrollToBottom()
   }, [messages])
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleNewChat = () => {
+    setMessages([])
+    setChatId(null)
+    setError(null)
+  }
+
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim()) return
 
@@ -38,21 +49,58 @@ export function Chat() {
     setMessages((prev) => [...prev, userMessage])
     setInput('')
     setLoading(true)
+    setError(null)
 
-    // Simulate API call
-    setTimeout(() => {
-      const isRelated = userMessage.content.toLowerCase().includes('report')
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: isRelated 
-          ? "Based on the Q3 Financial Report, the revenue increased by 15% compared to the previous quarter. The main driver for this was the enterprise segment."
-          : "I couldn't find this information in your uploaded documents.",
-        sources: isRelated ? [{ source: 'Q3_Financial_Report.pdf', chunk: 4 }] : undefined
+    try {
+      const response = await api.post('/chat/', {
+        message: userMessage.content,
+        chat_id: chatId,
+      })
+
+      const data = response.data
+
+      // The backend returns the full chat with messages; use the latest chat id
+      if (data.id) {
+        setChatId(data.id)
       }
-      setMessages((prev) => [...prev, assistantMessage])
+
+      // Find the latest assistant message from the response
+      const backendMessages: Array<{
+        id: string
+        role: string
+        content: string
+        sources: string | null
+        created_at: string
+      }> = data.messages || []
+
+      const lastAssistant = backendMessages
+        .filter((m) => m.role === 'assistant')
+        .pop()
+
+      if (lastAssistant) {
+        let parsedSources: Source[] | undefined
+        if (lastAssistant.sources) {
+          try {
+            parsedSources = JSON.parse(lastAssistant.sources)
+          } catch {
+            parsedSources = undefined
+          }
+        }
+
+        const assistantMessage: Message = {
+          id: lastAssistant.id,
+          role: 'assistant',
+          content: lastAssistant.content,
+          sources: parsedSources,
+        }
+        setMessages((prev) => [...prev, assistantMessage])
+      }
+    } catch (err: any) {
+      const detail = err.response?.data?.detail
+      setError(typeof detail === 'string' ? detail : 'Failed to get a response. Please try again.')
+    } finally {
       setLoading(false)
-    }, 1500)
+    }
   }
 
   return (
@@ -62,7 +110,7 @@ export function Chat() {
           <h1 className="text-3xl font-bold tracking-tight">Chat</h1>
           <p className="text-muted-foreground mt-2">Ask questions based on your uploaded documents.</p>
         </div>
-        <Button variant="outline" onClick={() => setMessages([])}>
+        <Button variant="outline" onClick={handleNewChat}>
           <MessageSquarePlus className="mr-2 h-4 w-4" />
           New Chat
         </Button>
@@ -135,6 +183,11 @@ export function Chat() {
               </div>
             </div>
           )}
+          {error && (
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive mx-4">
+              {error}
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
@@ -148,7 +201,7 @@ export function Chat() {
               disabled={loading}
             />
             <Button type="submit" disabled={!input.trim() || loading}>
-              <Send className="h-4 w-4" />
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </form>
           <div className="text-center mt-2">

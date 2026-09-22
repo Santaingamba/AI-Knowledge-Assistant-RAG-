@@ -1,3 +1,5 @@
+import fitz
+from fastapi import UploadFile
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models.sqlmodel_models import Document, User
 from app.core.config import settings

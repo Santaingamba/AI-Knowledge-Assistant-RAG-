@@ -1,11 +1,10 @@
 import json
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlmodel import select
 from typing import List
 from app.core.database import get_db
-from app.models.user import User
-from app.models.chat import Chat, Message
+from app.models import User, Chat, Message
 from app.schemas.chat import ChatResponse, ChatDetailResponse, ChatRequest, MessageResponse
 from app.services.auth_service import get_current_user
 from app.services.rag_service import rag_service
@@ -38,8 +37,8 @@ async def ask_question(
     user_msg = Message(chat_id=chat.id, role="user", content=request.message)
     db.add(user_msg)
     
-    # Query RAG
-    answer, sources = rag_service.query_documents(request.message)
+    # Query RAG — pass current_user.id for per-tenant isolation
+    answer, sources = rag_service.query_documents(request.message, current_user.id)
     
     # Save assistant message
     assistant_msg = Message(

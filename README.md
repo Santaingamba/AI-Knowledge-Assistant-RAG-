@@ -1,15 +1,15 @@
 # AI Knowledge Assistant
 
-A production-grade AI Knowledge Assistant (RAG Application) built with modern software engineering best practices. 
+A production‑grade AI Knowledge Assistant (RAG Application) built with modern software engineering best practices.
 
-This application allows users to upload PDF documents, processes them using a Retrieval-Augmented Generation (RAG) pipeline with Google Gemini and ChromaDB, and provides a polished chat interface to answer questions strictly based on the uploaded documents.
+This application allows users to upload PDF documents, processes them using a Retrieval‑Augmented Generation (RAG) pipeline with Google Gemini and ChromaDB, and provides a polished chat interface to answer questions strictly based on the uploaded documents.
 
 ## Project Overview
 
 - **Frontend**: React 19, TypeScript, Vite, TailwindCSS, shadcn/ui.
-- **Backend**: Python 3.12, FastAPI, SQLAlchemy, Pydantic v2.
-- **AI/RAG**: LangChain, Gemini API, HuggingFace embeddings (`all-MiniLM-L6-v2`), ChromaDB.
-- **Database**: PostgreSQL for relational data (Users, Documents metadata, Chats).
+- **Backend**: Python 3.12, FastAPI, **SQLModel** (async engine), Pydantic v2.
+- **AI/RAG**: LangChain, Gemini API, HuggingFace embeddings (`all‑MiniLM‑L6‑v2`), ChromaDB.
+- **Database**: Neon Serverless PostgreSQL (via `NEON_DATABASE_URL`).
 - **Authentication**: JWT with refresh tokens, bcrypt password hashing.
 - **Deployment**: Docker and Docker Compose.
 
@@ -17,22 +17,18 @@ This application allows users to upload PDF documents, processes them using a Re
 
 ```mermaid
 graph TD
-    User([User]) -->|HTTPS| React[Frontend (React + Vite)]
-    React -->|REST API| FastAPI[Backend (FastAPI)]
-    
-    FastAPI -->|JWT| Auth[(Auth Service)]
-    FastAPI -->|CRUD| Postgres[(PostgreSQL)]
-    
-    FastAPI -->|PDF Uploads| Storage[Local Storage]
-    FastAPI -->|PyMuPDF Text| DocumentService[Document Service]
-    
-    DocumentService -->|Chunks| Embeddings[sentence-transformers]
-    Embeddings -->|Vectors| Chroma[(ChromaDB)]
-    
-    FastAPI -->|Questions| RAG[RAG Service]
+    User([User]) -->|HTTPS| React["Frontend (React + Vite)"]
+    React -->|REST API| FastAPI["Backend (FastAPI)"]
+    FastAPI -->|JWT| Auth["Auth Service"]
+    FastAPI -->|CRUD| Postgres["PostgreSQL"]
+    FastAPI -->|PDF Uploads| Storage["Local Storage"]
+    FastAPI -->|PyMuPDF Text| DocumentService["Document Service"]
+    DocumentService -->|Chunks| Embeddings["sentence‑transformers"]
+    Embeddings -->|Vectors| Chroma["ChromaDB"]
+    FastAPI -->|Questions| RAG["RAG Service"]
     RAG -->|Similarity Search| Chroma
     Chroma -->|Top K Chunks| RAG
-    RAG -->|Prompt + Context| Gemini[Google Gemini API]
+    RAG -->|Prompt + Context| Gemini["Google Gemini API"]
     Gemini -->|Answer + Citations| FastAPI
 ```
 
@@ -62,10 +58,10 @@ graph TD
 
 ### Environment Variables
 1. Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-2. Update the `.env` file with your `GEMINI_API_KEY` and change the `JWT_SECRET`.
+    ```bash
+    cp .env.example .env
+    ```
+2. Update the `.env` file with your `GEMINI_API_KEY`, `JWT_SECRET`, and the Neon connection string (`NEON_DATABASE_URL`).
 
 ### Docker Setup (Recommended)
 You can run the entire stack using Docker Compose:
@@ -83,7 +79,10 @@ docker-compose up --build -d
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# On Windows:
+venv\\Scripts\\activate
+# On macOS/Linux:
+source venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8080
 ```
@@ -100,6 +99,6 @@ Once the backend is running, visit `/docs` (e.g., `http://localhost:8080/docs`) 
 
 ## Future Improvements
 - Migration from local file storage to AWS S3.
-- Advanced RAG techniques (e.g., re-ranking, Hyde).
-- WebSockets for chat streaming instead of SSE (Server-Sent Events) or standard polling.
-- Role-Based Access Control (RBAC) for team collaboration.
+- Advanced RAG techniques (e.g., re‑ranking, hybrid retrieval).
+- WebSockets for chat streaming instead of SSE or standard polling.
+- Role‑Based Access Control (RBAC) for team collaboration.
