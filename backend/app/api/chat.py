@@ -6,8 +6,8 @@ from typing import List
 from app.core.database import get_db
 from app.models import User, Chat, Message
 from app.schemas.chat import ChatResponse, ChatDetailResponse, ChatRequest, MessageResponse
-from app.services.auth_service import get_current_user
-from app.services.rag_service import rag_service
+from app.services import get_current_user
+from app.services import rag_service
 from app.core.exceptions import NotFoundException
 
 router = APIRouter()
